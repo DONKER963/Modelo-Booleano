@@ -4,6 +4,8 @@ import pandas as pd
 import os
 from nltk.corpus import stopwords
 from nltk.stem import PorterStemmer
+import numpy as np
+from sklearn.feature_extraction.text import CountVectorizer
 
 def diccionario(rep):#metodo
     for doc in rep:#recorremos todos los documentos en el repositorio
@@ -33,6 +35,18 @@ def diccionario(rep):#metodo
         tabla_frecuencias_stemming = tabla_frecuencias_stemming.sort_values(by='Frecuencia', ascending=False)#ordena
         tabla_frecuencias_stemming.to_csv("diccionarios/diccionario_stemming_"+doc.name,index=False,sep=":")
 
+def matrizBol():
+     # Inicializar el vectorizador de conteo binario
+    vectorizador = CountVectorizer(binary=True)
+
+    # Ajustar el vectorizador y transformar los documentos en una matriz binaria
+    matriz_binaria = vectorizador.fit_transform()
+
+    # Obtener la matriz binaria como una matriz densa (no dispersa)
+    matriz_binaria_dense = matriz_binaria.toarray()
+
+    # Guardar la matriz binaria en un archivo de texto
+    np.savetxt(, matriz_binaria_dense, fmt='%d')
 
 
 ############################MAIN########################
