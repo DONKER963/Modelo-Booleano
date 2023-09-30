@@ -35,22 +35,41 @@ def diccionario(rep):#metodo
         tabla_frecuencias_stemming = tabla_frecuencias_stemming.sort_values(by='Frecuencia', ascending=False)#ordena
         tabla_frecuencias_stemming.to_csv("diccionarios_stemming/diccionario_stemming_"+doc.name,index=False,sep=":")
 
-def matrizBol():
+def matrizBol(documentos,nombre_archivo):
      # Inicializar el vectorizador de conteo binario
     vectorizador = CountVectorizer(binary=True)
 
     # Ajustar el vectorizador y transformar los documentos en una matriz binaria
-    matriz_binaria = vectorizador.fit_transform()
+    matriz_binaria = vectorizador.fit_transform(documentos)
 
     # Obtener la matriz binaria como una matriz densa (no dispersa)
     matriz_binaria_dense = matriz_binaria.toarray()
-
+    matriz_binaria_dense = np.insert(matriz_binaria_dense, 0, nombre_archivo, axis=0)
+    
+    print(matriz_binaria_dense)
     # Guardar la matriz binaria en un archivo de texto
-    np.savetxt(, matriz_binaria_dense, fmt='%d')
+    np.savetxt("matriz de incidencias.txt", matriz_binaria_dense, fmt='%s',delimiter='\t')
 
 
-############################MAIN########################
+def leer_documentos_stemming(cont):
+    documentos = []
+    nombre_archivos = []
+    for nombre_archivo in os.listdir("diccionarios_stemming"):
+        if nombre_archivo.endswith(".txt"):
+            ruta_archivo = os.path.join("diccionarios_stemming", nombre_archivo)
+            with open(ruta_archivo, "r", encoding="utf-8") as archivo:
+                contenido = archivo.read()
+                documentos.append(contenido)
+                nombre_archivos.append(nombre_archivo)
+    return documentos,nombre_archivos
+
+############################   MAIN      ##############################
 contenido = 'repositorio'
 with os.scandir(contenido) as ficheros:
     diccionario(ficheros)
 
+documentos,nombre_archivos = leer_documentos_stemming(contenido)
+# Crear la matriz binaria y guardarla en el archivo .txt
+matrizBol(documentos,nombre_archivos)
+
+    
