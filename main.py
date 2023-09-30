@@ -33,7 +33,7 @@ def diccionario(rep):#metodo
         frecuencias_stemming = Counter(palabras_stemming)#cuenta las frecuencias
         tabla_frecuencias_stemming = pd.DataFrame(data=frecuencias_stemming.items(), columns=['Palabra', 'Frecuencia'])#lo lista en 2 colm
         tabla_frecuencias_stemming = tabla_frecuencias_stemming.sort_values(by='Frecuencia', ascending=False)#ordena
-        tabla_frecuencias_stemming.to_csv("diccionarios/diccionario_stemming_"+doc.name,index=False,sep=":")
+        tabla_frecuencias_stemming.to_csv("diccionarios_stemming/diccionario_stemming_"+doc.name,index=False,sep=":")
 
 def matrizBol():
      # Inicializar el vectorizador de conteo binario
