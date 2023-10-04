@@ -16,7 +16,6 @@ def diccionario(repositorio): #metodo para crear los diccionarios
         nombres.append(doc.name)
         with open(doc.path,'r',encoding="utf-8") as file:#abrimos documento x doc
             texto = file.read()#leemos el contenido
-            textos.append(texto)
         palabras = re.findall(r'\b\w+\b',texto.lower())#Convertimos a minuscula y separamos palabras
         #hacemos stopword
         stop_words = set(stopwords.words('spanish'))
@@ -24,11 +23,14 @@ def diccionario(repositorio): #metodo para crear los diccionarios
         #aplicamos stemming
         stemmer = PorterStemmer()
         palabras_stemming = [stemmer.stem(word) for word in palabras_stopwords]
+        # Convertir las palabras stemmizadas de nuevo a un texto
+        texto_stemmed = ' '.join(palabras_stemming)
+        textos.append(texto_stemmed)
         #contamos las frecuencias de:
         #texto limpio // texto con stopwords // texto con stemming
         frecuencias =+ Counter(palabras)#cuenta las frecuencias
         frecuencias_stopwords =+ Counter(palabras_stopwords)#cuenta las frecuencias
-        frecuencias_stemming = Counter(palabras_stemming)#cuenta las frecuencias
+        frecuencias_stemming =+ Counter(palabras_stemming)#cuenta las frecuencias
     #creamos la tabla de frecuencias para el texto limpio
     tabla_frecuencias = pd.DataFrame(data=frecuencias.items(), columns=['Palabra', 'Frecuencia'])#lo lista en 2 colm
     tabla_frecuencias = tabla_frecuencias.sort_values(by='Frecuencia', ascending=False)#ordena
@@ -100,19 +102,41 @@ def leer_documentos_stemming(cont):
     return documentos,nombre_archivos
 
 def crear_matriz_booleana(documentos, palabras, nombres):
-    matriz = np.zeros((len(documentos) + 1, len(palabras) + 1), dtype=object)
-    # Rellenar la primera fila con nombres de palabras
-    matriz[0, 1:] = palabras
-    # Rellenar la primera columna con nombres de documentos
-    matriz[1:, 0] = nombres
+    matriz = np.zeros((len(documentos) , len(palabras) ), dtype=object)
     for i, doc in enumerate(documentos):
         tokens = nltk.word_tokenize(doc)
         for j, palabra in enumerate(palabras):
-            matriz[i + 1, j + 1] = int(palabra in tokens)
-    DF = pd.DataFrame(matriz)
-    DF.transpose
-    DF.to_csv("matriz de incidencias.csv",sep=",",header=False)
+            matriz[i, j ] = int(palabra in tokens)
+    DF = pd.DataFrame(matriz,index=nombres,columns=palabras)
+    DF.transpose()
+    DF.to_csv("matriz_ind.csv",sep=",")
+    return DF
 
+"""def matriz(documentos,palabras,nombres):
+    mat = np.zeros((len(documentos)+1, len(palabras)+1), dtype=object)
+    for i, doc in enumerate(documentos):
+        tokens = nltk.word_tokenize(doc)
+        for j, palabra in enumerate(palabras):
+            mat[i+1, j+1] = int(palabra in tokens)
+    matrizInc = pd.DataFrame(matriz,index=palabras,columns=nombres)
+    matrizInc.transpose()
+    matrizInc.to_csv("matriz_ind.csv",sep=',',header=False)"""
+
+def notacion_Posfija():
+    pass
+
+def Hash_func(value):
+        key = 0
+        for i in range(0,len(value)):
+            key += (ord(value[i]))**(i+1)
+        return key % 64
+
+def Search(self,value): # Metodo para buscar elementos
+    hash = self.Hash_func(value);
+    if self.table[hash] is None:
+        return None
+    else:
+        return hex(id(self.table[hash]))
 ############################   MAIN      ##############################
 contenido = 'repositorio'#dado un repositorio
 documentos = []
@@ -126,9 +150,52 @@ with open("diccionarios\diccionario_stemming.txt", 'r',encoding='utf-8') as arch
 for i in palabras:
     if i >='0' and i<='9':
         palabras.remove(i)
+#print(palabras)
+#matriz(documentos,palabras,nombres)
+DF = crear_matriz_booleana(documentos,palabras,nombres)
+print(DF)
 
-crear_matriz_booleana(documentos,palabras,nombres)
+indices = {"Termino": [],
+           "Aparicion":[],
+           "Documento": []}
+D = []
+for colum in DF:
+    Total = DF[str(colum)].sum()
+    for i in DF.index:
+        if DF[colum][i] == 1:
+            D.append(i)
+        #print(colum," ",i," ",DF[colum][i])
+    indices["Termino"].append(str(colum))
+    indices["Aparicion"].append(Total)
+    #print(indices["Documento"])
+    indices["Documento"].append(str(D))
+    #print(D)
+    D.clear()
 
+hash = []
+indiceInvertido = pd.DataFrame(indices)
+print(indiceInvertido)
+for row in indiceInvertido.itertuples():
+    key = Hash_func(row.Termino)
+    hash.append(key)
+    #print(row.Termino,row.Aparicion,key)
+indiceInvertido['HASH'] = hash
+print(indiceInvertido)
+
+c = indiceInvertido.loc[indiceInvertido['HASH'] == 4]
+d = indiceInvertido.loc[indiceInvertido['HASH'] == 6]
+"""
+hola OR perro
+
+hola perro OR
+"""
+
+
+print(indiceInvertido.query("HASH == 4"))
+
+
+#print(indices["Documento"])
+#print(indices)
 #documentos,nombre_archivos = leer_documentos_stemming(contenido)
 # Crear la matriz binaria y guardarla en el archivo .txt
 #matrizBol(documentos,nombre_archivos)
